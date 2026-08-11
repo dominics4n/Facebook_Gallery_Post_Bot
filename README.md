@@ -6,9 +6,9 @@ pip install requests
 pip install dotenv
 
 create a .env file with the format:
-    APP_ID = *Your APP ID*
-    PAGE_ID = *Your Page ID*
-    PAGE_TOKEN = *Your Page Token*
+    - APP_ID = \**Your APP ID\**
+    - PAGE_ID = \**Your Page ID\**
+    - PAGE_TOKEN = \**Your Page Token\**
 
 Declare your directories inside the variable Directories
 ![alt text]({8A425256-4270-498E-96C2-CC4E2B663868}.png)
