@@ -18,10 +18,6 @@ page_id = os.getenv("PAGE_ID")
 app_token = os.getenv("PAGE_TOKEN")
 GFiles, GDirs, GPosted = [],[],[]
 
-class Gallery():
-    def __init__(self, filesInQueue):
-        self.filesInQueue = filesInQueue
-
 def DirectoryContent(directory, n):
     content = []
     files = os.listdir(directory)
@@ -60,13 +56,16 @@ def GetAllFiles(dirs):
 
 def PostImage():
     global GFiles, GDirs, GPosted
-    idFile = random.randint(0, len(GFiles.filesInQueue) - 1)
-    idDir = GFiles.filesInQueue[idFile][1]
-    path = os.path.join(GDirs[idDir], GFiles.filesInQueue[idFile][0])
+    with open("captions.json", 'r', encoding="utf-8") as jsonfile:
+        captions = json.load(jsonfile)
+    idcaption = random.randint(0, len(captions) - 1)
+    idFile = random.randint(0, len(GFiles) - 1)
+    idDir = GFiles[idFile][1]
+    path = os.path.join(GDirs[idDir], GFiles[idFile][0])
     url = f"https://graph.facebook.com/v26.0/{page_id}/photos"
     params = {
         'access_token': app_token,
-        "message": ""
+        "message": captions[idcaption]
     }
     with open(path, "rb") as file:
         files = {
@@ -77,14 +76,14 @@ def PostImage():
             result = response.json()
             print(result)
             if "id" in result:
-                GPosted.append(GFiles.filesInQueue[idFile][0])
+                GPosted.append(GFiles[idFile][0])
                 with open("Posted.json", "w") as file:
                     json.dump(GPosted, file)
-                GFiles.filesInQueue.pop(idFile)
+                GFiles.pop(idFile)
             else:
                 with open("log.txt", "a") as file:
                     file.write(str(datetime.datetime.now()) + str(result) + "\n")
-            print("Files in queue: " + str(len(GFiles.filesInQueue)))
+            print("Files in queue: " + str(len(GFiles)))
 
         except requests.exceptions.RequestException as e:
             print(f"Request error: {e}")
@@ -97,9 +96,11 @@ def Main(OriginalDirectories):
         Blacklisted = json.load(jsonfile)  
     allFiles, GDirs = GetAllFiles(OriginalDirectories)
     print("Original Files: " + str(len(allFiles)))
-    validFiles = CleanFiles(allFiles, GPosted, Blacklisted)
-    print("Valid Files: " + str(len(validFiles)))
-    GFiles = Gallery(validFiles)
+    GFiles = CleanFiles(allFiles, GPosted, Blacklisted)
+    print("Valid Files: " + str(len(GFiles)))
+
+    PostImage()
+
     #Copy and paste for every time you want to post
     schedule.every().day.at("11:20").do(PostImage)  
     schedule.every().day.at("15:21").do(PostImage)
